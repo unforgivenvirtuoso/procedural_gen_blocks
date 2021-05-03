@@ -1,0 +1,185 @@
+[gd_scene load_steps=17 format=2]
+
+[ext_resource path="res://Progress/under.png" type="Texture" id=1]
+[ext_resource path="res://Game/Target/Target.gd" type="Script" id=2]
+[ext_resource path="res://Progress/progress.png" type="Texture" id=3]
+[ext_resource path="res://Progress/grabber.png" type="Texture" id=4]
+[ext_resource path="res://Fonts/Varta-Regular.ttf" type="DynamicFontData" id=5]
+
+[sub_resource type="StyleBoxEmpty" id=1]
+
+[sub_resource type="DynamicFont" id=2]
+size = 32
+font_data = ExtResource( 5 )
+
+[sub_resource type="CylinderShape" id=3]
+radius = 2.0
+height = 4.0
+
+[sub_resource type="SpatialMaterial" id=4]
+albedo_color = Color( 0.215686, 0.203922, 0.203922, 1 )
+
+[sub_resource type="CylinderMesh" id=5]
+top_radius = 2.0
+bottom_radius = 2.0
+height = 4.0
+
+[sub_resource type="CylinderShape" id=6]
+radius = 1.5
+height = 5.0
+
+[sub_resource type="Shader" id=7]
+code = "shader_type spatial;
+render_mode cull_disabled;
+
+uniform vec4 color : hint_color;
+
+uniform sampler2D noise : hint_texture;
+
+varying float strength;
+void vertex() {
+	strength = -VERTEX.y / 2.5;
+}
+
+void fragment() {
+	if(strength >= 0.999) {
+		return;
+	}
+	
+	ALBEDO = color.rgb;
+	ALPHA = color.a * strength * 2.0;
+	
+	ALPHA *= texture(noise, UV + vec2(TIME) * 0.1).r;
+	
+	ALPHA = clamp(ALPHA, 0.0, 1.0);
+}
+"
+
+[sub_resource type="OpenSimplexNoise" id=8]
+octaves = 6
+period = 4.0
+
+[sub_resource type="NoiseTexture" id=9]
+seamless = true
+noise = SubResource( 8 )
+
+[sub_resource type="ShaderMaterial" id=10]
+shader = SubResource( 7 )
+shader_param/color = Color( 0.117647, 0.54902, 0.756863, 0.721569 )
+shader_param/noise = SubResource( 9 )
+
+[sub_resource type="CylinderMesh" id=11]
+bottom_radius = 2.0
+height = 5.0
+
+[node name="Target" type="StaticBody"]
+script = ExtResource( 2 )
+
+[node name="CanvasLayer" type="CanvasLayer" parent="."]
+
+[node name="MarginContainer" type="MarginContainer" parent="CanvasLayer"]
+anchor_right = 1.0
+margin_bottom = 64.0
+custom_constants/margin_right = 16
+custom_constants/margin_top = 16
+custom_constants/margin_left = 16
+custom_constants/margin_bottom = 16
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="NinePatchRect" type="NinePatchRect" parent="CanvasLayer/MarginContainer"]
+margin_left = 16.0
+margin_top = 16.0
+margin_right = 1008.0
+margin_bottom = 48.0
+texture = ExtResource( 1 )
+patch_margin_left = 16
+patch_margin_top = 16
+patch_margin_right = 16
+patch_margin_bottom = 16
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="NinePatchRect" type="NinePatchRect" parent="CanvasLayer/MarginContainer/NinePatchRect"]
+modulate = Color( 1, 1, 1, 0.498039 )
+anchor_right = 1.0
+anchor_bottom = 1.0
+texture = ExtResource( 3 )
+patch_margin_left = 16
+patch_margin_top = 16
+patch_margin_right = 16
+patch_margin_bottom = 16
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="HSlider" type="HSlider" parent="CanvasLayer/MarginContainer"]
+margin_left = 16.0
+margin_top = 16.0
+margin_right = 1008.0
+margin_bottom = 48.0
+mouse_filter = 2
+custom_icons/grabber = ExtResource( 4 )
+custom_styles/slider = SubResource( 1 )
+max_value = 1.0
+step = 0.0
+value = 0.5
+
+[node name="GameOver" type="CenterContainer" parent="CanvasLayer"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+__meta__ = {
+"_edit_use_anchors_": false
+}
+
+[node name="TabContainer" type="TabContainer" parent="CanvasLayer/GameOver"]
+margin_left = 508.0
+margin_top = 294.0
+margin_right = 516.0
+margin_bottom = 306.0
+tabs_visible = false
+
+[node name="Lost" type="Label" parent="CanvasLayer/GameOver/TabContainer"]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 8.0
+margin_right = -4.0
+margin_bottom = -4.0
+custom_fonts/font = SubResource( 2 )
+text = "The enemy captured the target!"
+
+[node name="Won" type="Label" parent="CanvasLayer/GameOver/TabContainer"]
+visible = false
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 4.0
+margin_top = 8.0
+margin_right = -4.0
+margin_bottom = -4.0
+custom_fonts/font = SubResource( 2 )
+text = "You captured the target!"
+
+[node name="CollisionShape" type="CollisionShape" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5, 0 )
+shape = SubResource( 3 )
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5, 0 )
+material_override = SubResource( 4 )
+mesh = SubResource( 5 )
+material/0 = null
+
+[node name="Area" type="Area" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 0 )
+
+[node name="CollisionShape" type="CollisionShape" parent="Area"]
+shape = SubResource( 6 )
+
+[node name="MeshInstance" type="MeshInstance" parent="Area"]
+material_override = SubResource( 10 )
+mesh = SubResource( 11 )
+material/0 = null
